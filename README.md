@@ -1,6 +1,14 @@
 # SOCIT2ME Multitool
 
-![SOCIT2ME Logo](socit2me_logo.png)
+{Fore.BLUE}{Style.BRIGHT}
+ _____  _____ _____ _____ _____ _____ ___  ___ _____ 
+/  ___||  _  /  __ \_   _|_   _/ __  \|  \/  ||  ___|
+\ `--. | | | | /  \/ | |   | | `' / /'| .  . || |__  
+ `--. \| | | | |     | |   | |   / /  | |\/| ||  __| 
+/\__/ /\ \_/ / \__/\_| |_  | | ./ /___| |  | || |___ 
+\____/  \___/ \____/\___/  \_/ \_____/\_|  |_/\____/ 
+{Style.RESET_ALL}
+
 
 The SOCIT2ME Multitool is a Python script built for SOC (Security Operations Center) Analysts, providing seamless threat intelligence lookup and QR code decoding capabilities. This tool is designed to assist cybersecurity professionals in gathering insights from various sources and efficiently extracting information from QR codes, all within a single application.
 
@@ -38,8 +46,7 @@ The SOCIT2ME Multitool is a Python script built for SOC (Security Operations Cen
    API_KEY_URLSCAN=your_urlscan_api_key
    API_KEY_IPQUALITYSCORE=your_ipqualityscore_api_key
    API_KEY_ABUSEIPDB=your_abuseipdb_api_key
-   API_KEY_CIRCL=your_circl_api_key
-   BROWSERLING_API_KEY=your_browserling_api_key
+   API_KEY_BROWSERLING=your_browserling_api_key
    ```
 
 ## Usage
