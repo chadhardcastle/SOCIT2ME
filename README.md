@@ -21,7 +21,7 @@ The SOCIT2ME Multitool is a Python script built for SOC (Security Operations Cen
 2. Navigate to the project directory:
 
    ```bash
-   cd SOCIT2ME-Multitool
+   cd SOCIT2ME
    ```
 
 3. Install the required Python packages:
