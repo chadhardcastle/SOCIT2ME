@@ -10,6 +10,12 @@ The SOCIT2ME Multitool is a Python script built for SOC (Security Operations Cen
 - Access threat intelligence data from multiple sources including VirusTotal, URLScan, AbuseIPDB, IPQualityScore, and more.
 - Launch sandboxes for URLs/domains using Browserling API to capture screenshots.
 
+## Future state
+
+- Add mass lookup capabilities via CSV files
+- Add email scanning via IPQS and haveibeenpwned API's
+- Add additional Threat Intel functions for MalwareBazaar and more
+
 ## Installation
 
 1. Clone this repository to your local machine:
