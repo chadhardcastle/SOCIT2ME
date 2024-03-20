@@ -1,15 +1,24 @@
+import os
+from dotenv import load_dotenv
+import re
 import requests
-import simplejson as json
-import openai
+from prettytable import PrettyTable
+from colorama import Fore, Style
 from pyzbar.pyzbar import decode
 from PIL import Image
-from prettytable import PrettyTable
-from colorama import init as colorama_init
-from colorama import Fore
-from colorama import Back
-from colorama import Style
 
-print(f"""{Fore.BLUE}{Style.BRIGHT}
+# Load environment variables from .env file
+load_dotenv()
+
+# Retrieve API keys from environment variables
+API_KEY_VIRUSTOTAL = os.getenv("API_KEY_VIRUSTOTAL")
+API_KEY_URLSCAN = os.getenv("API_KEY_URLSCAN")
+API_KEY_IPQUALITYSCORE = os.getenv("API_KEY_IPQUALITYSCORE")
+API_KEY_ABUSEIPDB = os.getenv("API_KEY_ABUSEIPDB")
+API_KEY_CIRCL = os.getenv("API_KEY_CIRCL")
+BROWSERLING_API_KEY = os.getenv("BROWSERLING_API_KEY")
+
+print(f"""{Fore.CYAN}{Style.BRIGHT}
  _____  _____ _____ _____ _____ _____ ___  ___ _____ 
 /  ___||  _  /  __ \_   _|_   _/ __  \|  \/  ||  ___|
 \ `--. | | | | /  \/ | |   | | `' / /'| .  . || |__  
@@ -18,289 +27,235 @@ print(f"""{Fore.BLUE}{Style.BRIGHT}
 \____/  \___/ \____/\___/  \_/ \_____/\_|  |_/\____/ 
                                                    {Style.RESET_ALL}""")
 
-print(f"""The SOC Multitool - Created by{Fore.BLUE} https://github.com/chadhardcastle/
+print(f"""The SOC Multitool - v1.1 - Created by{Fore.BLUE} https://github.com/chadhardcastle/
       {Style.RESET_ALL}""")
 
-def decode_qr():
-    # Ask the user for the image file path
-    print()
-    image_path = input("Please enter the path to your image file: ")
-    # Open the image file
-    img = Image.open(image_path)
-    # Decode the QR code
-    result = decode(img)
-    # Print the result
-    for qr_result in result:
-        decoded_url = qr_result.data.decode("utf-8")
-        print(f"{Fore.CYAN}{Style.BRIGHT}Decoded text is: {Style.RESET_ALL}", decoded_url)
-        lookup_url(decoded_url)
+def decode_qr_from_file(image_path):
+    try:
+        img = Image.open(image_path)
+        result = decode(img)
+        if result:
+            decoded_urls = [qr_result.data.decode("utf-8") for qr_result in result]
+            return decoded_urls
+        else:
+            print("No QR code found in the image.")
+            return []
+    except Exception as e:
+        print("Error:", e)
+        return []
 
-def lookup_url(url):
-    # Define the API endpoint
-    api_url = "https://urlscan.io/api/v1/scan/"
-    # Define the headers with your API key
-    headers = {
-        "Content-Type": "application/json",
-        "API-Key": "6cf53e1e-e087-4ced-84cb-cd5135355845"
-    }
-    # Define the data with the URL to scan
-    data = {"url": url}
-    # Make a POST request to the urlscan API
-    response = requests.post(api_url, headers=headers, json=data)
-    # Parse the JSON response
-    data = response.json()
-    # Extract and print the result URL
-    result_url = data.get('result')
-    if result_url:
-        print(f"{Fore.CYAN}{Style.BRIGHT}URL lookup result: {Style.RESET_ALL}", result_url)
+def identify_and_run(input_value):
+    # Check if the input is a filename or path to decode a QR code
+    if os.path.isfile(input_value):
+        decoded_urls = decode_qr_from_file(input_value)
+        if decoded_urls:
+            for url in decoded_urls:
+                identify_and_run(url)
+        else:
+            print("No valid QR code found in the image.")
+    # Check if the input is an IP address
+    elif re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", input_value):
+        run_ip_functions(input_value)
+    # Check if the input is a valid URL or domain
+    elif re.match(r"^(https?://)?(www\.)?([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$", input_value):
+        run_url_functions(input_value)
+    # Check if the input is a valid hash value
+    elif re.match(r"^[a-fA-F0-9]{32}$", input_value):
+        run_hash_functions(input_value)
+    elif re.match(r"^[a-fA-F0-9]{40}$", input_value):
+        run_hash_functions(input_value)
+    elif re.match(r"^[a-fA-F0-9]{64}$", input_value):
+        run_hash_functions(input_value)
+    elif re.match(r"^[a-fA-F0-9]{96}$", input_value):
+        run_hash_functions(input_value)
+    else:
+        print("Invalid input.")
 
-def get_ip_info(ip_address):
-    print(f"""{Fore.CYAN}{Style.BRIGHT}
-IPQualityScore{Style.RESET_ALL}""")
-    api_key = 'yourapikeyhere'
-    url = f'https://www.ipqualityscore.com/api/json/ip/{api_key}/{ip_address}'
-    
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        data = response.json()
-        table = PrettyTable()
-        table.field_names = ["Key", "Value"]
 
-        for key, value in data.items():
-            table.add_row([key, value])
 
-        print(table)
+def run_ip_functions(ip_address):
+    lookup_virustotal_ip(ip_address)
+    lookup_abuseipdb(ip_address)
+    lookup_ipqualityscore(ip_address)
+    # Add other IP-related functions here
 
-def get_abuse_info(ip_address):
-    print(f"""{Fore.CYAN}{Style.BRIGHT}
-AbuseIPDB{Style.RESET_ALL}""")
-    api_key = '3725c29acc2a90007c713f1a24aa56e4f9f8667a1930d3d6edab82023a0e5aa0ac626953c3577e9c'
-    url = f'https://api.abuseipdb.com/api/v2/check?ipAddress={ip_address}'
-    headers = {
-        'Accept': 'application/json',
-        'Key': api_key
-    }
+def run_url_functions(url):
+    lookup_virustotal_url(url)
+    lookup_urlscan(url)
+    #lookup_browserling(url)
+    # Add other URL-related functions here
 
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code == 200:
-        data = response.json()
-        table = PrettyTable()
-        table.field_names = ["Key", "Value"]
+def run_hash_functions(hash_value):
+    lookup_virustotal_hash(hash_value)
+    lookup_circl_hash(hash_value)
+    # Add other hash-related functions here
 
-        for key, value in data['data'].items():
-            table.add_row([key, str(value)])
-
-        print(table)
-
-def shodan_ip_search(ip_address):
-    print(f"""{Fore.CYAN}{Style.BRIGHT}
-SHODAN{Style.RESET_ALL}""")
-    #def shodan_ip_search(ip_address):
-    # Define the Shodan web search URL for the IP address
-    search_url = f'https://www.shodan.io/host/{ip_address}'
-    
-    # Print the link to the Shodan web search results
-    print(f"Here is the link to the Shodan web search results: {search_url}")
-
-def lookup_ip(ip):
+def lookup_virustotal_ip(ip):
     print(f"""{Fore.CYAN}{Style.BRIGHT}
 VirusTotal{Style.RESET_ALL}""")
-    # Define the API endpoint
+    headers = {"x-apikey": API_KEY_VIRUSTOTAL}
     api_url = f"https://www.virustotal.com/api/v3/ip_addresses/{ip}"
-    # Define the headers with your API key
-    headers = {
-        "x-apikey": "64fd7895719b125d89103c1d65a1529c142190ca2f2ee3dc44e29b3a172a0243"
-    }
-    
-    # Make a GET request to the VirusTotal API
     response = requests.get(api_url, headers=headers)
-    
     if response.status_code == 200:
         data = response.json()
-        
-        # Create a table to display some of the results
         table = PrettyTable()
-        
-        # Add columns to the table
         table.field_names = ["Attribute", "Value"]
-        
-        # Add some data to the table
         table.add_row([f"{Style.BRIGHT}Community Score{Style.RESET_ALL}", data['data']['attributes']['reputation']])
         if 'last_analysis_stats' in data['data']['attributes']:
             table.add_row([f"{Style.BRIGHT}Vendor Score{Style.RESET_ALL}", data['data']['attributes']['last_analysis_stats']])
         table.add_row([f"{Style.BRIGHT}Report URL{Style.RESET_ALL}", f"{Fore.BLUE}https://www.virustotal.com/gui/ip-address/{ip}/detection{Style.RESET_ALL}"])
-        
         print(table)
-        
-        get_ip_info(ip)  # Call get_ip_info function here
-        get_abuse_info(ip)  # Call get_abuse_info function here
+    else:
+        print("Error:", response.text)
 
-def lookup_filehash(filehash):
+def lookup_virustotal_url(url):
     print(f"""{Fore.CYAN}{Style.BRIGHT}
 VirusTotal{Style.RESET_ALL}""")
-    # Define the API endpoint
-    api_url = f"https://www.virustotal.com/api/v3/files/{filehash}"
-    # Define the headers with your API key
-    headers = {
-        "x-apikey": "64fd7895719b125d89103c1d65a1529c142190ca2f2ee3dc44e29b3a172a0243"
-    }
-    
-    # Make a GET request to the VirusTotal API
+    headers = {"x-apikey": API_KEY_VIRUSTOTAL}
+    api_url = f"https://www.virustotal.com/api/v3/search?query={url}"
     response = requests.get(api_url, headers=headers)
-    
     if response.status_code == 200:
         data = response.json()
-        
-        # Create a table to display the results
         table = PrettyTable()
-        
-        # Add columns to the table
-        table.field_names = ["Attribute", "Value"]
-        
-        # Add some data to the table
-        table.add_row([f"{Style.BRIGHT}Community Score{Style.RESET_ALL}", data['data']['attributes']['reputation']])
-        if 'last_analysis_stats' in data['data']['attributes']:
-            table.add_row([f"{Style.BRIGHT}Vendor Score{Style.RESET_ALL}", data['data']['attributes']['last_analysis_stats']])
-        table.add_row([f"{Style.BRIGHT}Report URL{Style.RESET_ALL}", f"{Fore.BLUE}https://www.virustotal.com/gui/files/{filehash}/detection{Style.RESET_ALL}"])
-        
+        table.field_names = ["Community Score", "Vendor Score", "Report URL"]
+        for item in data["data"]:
+            community_score = item["attributes"].get("reputation", "-")
+            vendor_score = item["attributes"].get("last_analysis_stats", "-")
+            report_url = f"{Fore.BLUE}https://www.virustotal.com/gui/domain/{item['id']}/detection{Style.RESET_ALL}"
+            table.add_row([community_score, vendor_score, report_url])
         print(table)
-
-def lookup_hash(filehash):
-    print(f"""{Fore.CYAN}{Style.BRIGHT}
-CIRCL{Style.RESET_ALL}""")
-    # Determine the hash type based on the length of the hash value
-    if len(filehash) == 32:
-        hash_type = "md5"
-    elif len(filehash) == 40:
-        hash_type = "sha1"
-    elif len(filehash) == 64:
-        hash_type = "sha256"
     else:
-        print("Invalid hash value.")
+        print("Error:", response.text)
+
+
+
+def lookup_virustotal_hash(hash_value, hash_type):
+    print(f"""{Fore.CYAN}{Style.BRIGHT}
+VirusTotal{Style.RESET_ALL}""")
+    if hash_type not in ["md5", "sha1", "sha256", "sha3-384"]:
+        print("Invalid hash type. Supported types are: md5, sha1, sha256, sha3-384")
         return
 
-    # Define the API endpoint URL
-    api_url = f'https://hashlookup.circl.lu/lookup/{hash_type}/{filehash}'
-    
-    # Define headers
-    headers = {'accept': 'application/json'}
-    
-    try:
-        # Make the API request
-        response = requests.get(api_url, headers=headers)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        
-        # Parse the JSON response
+    headers = {"x-apikey": API_KEY_VIRUSTOTAL}
+    api_url = f"https://www.virustotal.com/api/v3/files/{hash_value}"
+    response = requests.get(api_url, headers=headers)
+    if response.status_code == 200:
         data = response.json()
-        
-        # Create a table for the results
         table = PrettyTable()
-        table.field_names = ['Key', 'Value']
-        
-        # Add data to the table
+        table.field_names = ["Attribute", "Value"]
+        table.add_row(["Community Score", data['data']['attributes']['reputation']])
+        if 'last_analysis_stats' in data['data']['attributes']:
+            table.add_row(["Vendor Score", data['data']['attributes']['last_analysis_stats']])
+        table.add_row(["Report URL", f"{Fore.BLUE}https://www.virustotal.com/gui/files/{hash_value}/detection{Style.RESET_ALL}"])
+        print(table)
+    else:
+        print("Error:", response.text)
+
+def lookup_abuseipdb(ip_address):
+    print(f"""{Fore.CYAN}{Style.BRIGHT}
+AbuseIPDB{Style.RESET_ALL}""")
+    url = f'https://api.abuseipdb.com/api/v2/check?ipAddress={ip_address}'
+    headers = {
+        'Accept': 'application/json',
+        'Key': API_KEY_ABUSEIPDB
+    }
+
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        table = PrettyTable()
+        table.field_names = ["Key", "Value"]
+        for key, value in data['data'].items():
+            table.add_row([key, str(value)])
+        print(table)
+    else:
+        print("Error:", response.text)
+
+def lookup_ipqualityscore(ip_address):
+    print(f"""{Fore.CYAN}{Style.BRIGHT}
+IPQualityScore{Style.RESET_ALL}""")
+    url = f'https://www.ipqualityscore.com/api/json/ip/{API_KEY_IPQUALITYSCORE}/{ip_address}'
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        table = PrettyTable()
+        table.field_names = ["Key", "Value"]
         for key, value in data.items():
             table.add_row([key, value])
-        
-        # Print the table
         print(table)
-        
+    else:
+        print("Error:", response.text)
+
+def lookup_urlscan(url):
+    print(f"""{Fore.CYAN}{Style.BRIGHT}
+URLScan{Style.RESET_ALL}""")
+    api_url = "https://urlscan.io/api/v1/scan/"
+    headers = {"API-Key": API_KEY_URLSCAN}
+    data = {"url": url}
+    response = requests.post(api_url, headers=headers, json=data)
+    if response.status_code == 200:
+        result_url = response.json().get("result")
+        if result_url:
+            print(f"{Fore.CYAN}{Style.BRIGHT}URL Scan result:{Style.RESET_ALL} {result_url}")
+        else:
+            print(f"{Fore.RED}{Style.BRIGHT}No result found.{Style.RESET_ALL}")
+    else:
+        print("Error:", response.text)
+
+def lookup_browserling(url):
+    if not BROWSERLING_API_KEY:
+        print("Browserling API key is not provided. Please add it to the .env file.")
+        return
+
+    api_url = f"https://api.browserling.com/v1/screenshots?token={BROWSERLING_API_KEY}&url={url}"
+    response = requests.get(api_url)
+
+    if response.status_code == 200:
+        print("Sandbox launched successfully. You will receive the screenshot shortly.")
+    else:
+        print("Error launching sandbox:", response.text)
+
+def lookup_circl_hash(hash_value, hash_type):
+    print(f"""{Fore.CYAN}{Style.BRIGHT}
+CIRCL{Style.RESET_ALL}""")
+    api_url = f"https://hashlookup.circl.lu/lookup/{hash_type}/{hash_value}"
+    headers = {'accept': 'application/json'}
+    try:
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        table = PrettyTable()
+        table.field_names = ['Key', 'Value']
+        for key, value in data.items():
+            table.add_row([key, value])
+        print(table)
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
 
-
-
-api_key = "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"
-# Function to interact with ChatGPT
-def chat_with_gpt():
-    print()
-    print("You are chatting with ChatGPT. Type 'exit' to end the conversation.\n")
-    while True:
-        user_input = input(f"{Fore.BLUE}{Style.BRIGHT}You: {Style.RESET_ALL}")
-        if user_input.lower() == "exit":
-            break
-
-        response = ask_chat_gpt(user_input)
-        print(f"{Fore.CYAN}{Style.BRIGHT}ChatGPT:{Style.RESET_ALL} {response}")
-
-# Function to ask a question to ChatGPT
-def ask_chat_gpt(question):
-    response = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=f"You: {question}\nChatGPT:",
-        max_tokens=150,  # Adjust as needed
-        api_key=api_key
-    )
-    return response.choices[0].text.strip()
-
-
+# Main function to run the script
 def main():
-    while True:  # Add a loop to keep the user in the menu until they choose to exit
-        print(f"""{Style.BRIGHT}Please select an option from below
-              {Style.RESET_ALL}""")
-        
-        print("1. Decode QR code")
-        print("2. Scan an IP address")
-        print("3. Scan a Filehash")
-        print("4. Ask ChatGPT")
-        print("5. Exit")  # Add an option to exit
-        
-        choice = input(f"""{Style.BRIGHT}
-What is your choice?: {Style.RESET_ALL}""")
-        
-        if choice == '1':
-            decode_qr()
-        elif choice == '2':
-            print()
-            ip_address = input(f"{Style.BRIGHT}Please enter an IP address: {Style.RESET_ALL}")
-            lookup_ip(ip_address)
-            shodan_ip_search(ip_address)
-        elif choice == '3':
-            print()
-            filehash = input(f"{Style.BRIGHT}Please enter a filehash: {Style.RESET_ALL}")
-            lookup_filehash(filehash)
-            lookup_hash(filehash)
-        elif choice == '4':
-            chat_with_gpt()
-        elif choice == '5':  # Exit the loop and the program
+    print(f"{Fore.BLUE}The SOCIT2ME Multitool is tailored for CyberSecurity professionals, offering seamless threat intelligence lookup and QR code decoding capabilities. With a user-friendly interface, analysts can swiftly gather insights from diverse sources and extract information from QR codes, all within a single tool. Streamlined workflow and customizable features enhance SOC efficiency, empowering analysts to respond promptly to security incidents and bolster threat detection efforts.{Style.RESET_ALL}\n") 
+    print(f"To exit, type {Fore.RED}'exit'{Style.RESET_ALL}.")
+    print(f"For help, type {Fore.GREEN}'help'{Style.RESET_ALL}.")
+    while True:
+        user_input = input(f"Enter an {Fore.YELLOW}IP address{Style.RESET_ALL}, {Fore.YELLOW}URL/domain{Style.RESET_ALL}, {Fore.YELLOW}hash value{Style.RESET_ALL}, or provide a {Fore.YELLOW}file path{Style.RESET_ALL} for QR code decoding: ").strip()
+        if user_input.lower() == 'exit':
+            print("Exiting the SOC Multitool. Goodbye!")
             break
+        elif user_input.lower() == 'help':
+            print_help()
         else:
-            print("Invalid choice. Please select a valid option.")
+            identify_and_run(user_input)
 
-        print()
-        print(f"""{Fore.BLUE}{Style.BRIGHT}Would you like to choose another option? {Style.RESET_ALL}""")
-        print()
 
-        print("1. Decode QR code")
-        print("2. Scan an IP address")
-        print("3. Scan a Filehash")
-        print("4. Ask ChatGPT")
-        print("5. Exit")  # Add an option to exit
-        
-        choice = input(f"""{Style.BRIGHT}
-What is your choice?: {Style.RESET_ALL}""")
-        
-        if choice == '1':
-            decode_qr()
-        elif choice == '2':
-            print()
-            ip_address = input(f"{Style.BRIGHT}Please enter an IP address: {Style.RESET_ALL}")
-            lookup_ip(ip_address)
-            shodan_ip_search(ip_address)
-        elif choice == '3':
-            print()
-            filehash = input(f"{Style.BRIGHT}Please enter a filehash: {Style.RESET_ALL}")
-            lookup_filehash(filehash)
-            lookup_hash(filehash)
-        elif choice == '4':
-            chat_with_gpt()
-        elif choice == '5':  # Exit the loop and the program
-            break
-        else:
-            print()
-            print(f"""{Fore.RED}{Style.BRIGHT}Invalid choice. Please select a valid option.{Style.RESET_ALL}""")
-            print()
 
+def print_help():
+    print(f"{Fore.GREEN}SOCIT2ME Multitool Help{Style.RESET_ALL}")
+    print("This tool allows you to perform the following actions:")
+    print("- Enter an IP address, URL/domain, hash value, or file path to decode QR codes and perform threat intelligence lookups.")
+    print("- Type 'exit' to exit the tool.")
+    print("- Type 'help' to display this help message.")
+
+# Entry point of the script
 if __name__ == "__main__":
     main()
