@@ -16,7 +16,7 @@ API_KEY_URLSCAN = os.getenv("API_KEY_URLSCAN")
 API_KEY_IPQUALITYSCORE = os.getenv("API_KEY_IPQUALITYSCORE")
 API_KEY_ABUSEIPDB = os.getenv("API_KEY_ABUSEIPDB")
 API_KEY_CIRCL = os.getenv("API_KEY_CIRCL")
-BROWSERLING_API_KEY = os.getenv("BROWSERLING_API_KEY")
+API_KEY_BROWSERLING = os.getenv("API_KEY_BROWSERLING")
 
 print(f"""{Fore.CYAN}{Style.BRIGHT}
  _____  _____ _____ _____ _____ _____ ___  ___ _____ 
@@ -207,7 +207,7 @@ def lookup_browserling(url):
         print("Browserling API key is not provided. Please add it to the .env file.")
         return
 
-    api_url = f"https://api.browserling.com/v1/screenshots?token={BROWSERLING_API_KEY}&url={url}"
+    api_url = f"https://api.browserling.com/v1/screenshots?token={API_KEY_BROWSERLING}&url={url}"
     response = requests.get(api_url)
 
     if response.status_code == 200:
