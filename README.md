@@ -1,14 +1,5 @@
 # SOCIT2ME Multitool
 
-{Fore.BLUE}{Style.BRIGHT}
- _____  _____ _____ _____ _____ _____ ___  ___ _____ 
-/  ___||  _  /  __ \_   _|_   _/ __  \|  \/  ||  ___|
-\ `--. | | | | /  \/ | |   | | `' / /'| .  . || |__  
- `--. \| | | | |     | |   | |   / /  | |\/| ||  __| 
-/\__/ /\ \_/ / \__/\_| |_  | | ./ /___| |  | || |___ 
-\____/  \___/ \____/\___/  \_/ \_____/\_|  |_/\____/ 
-{Style.RESET_ALL}
-
 
 The SOCIT2ME Multitool is a Python script built for SOC (Security Operations Center) Analysts, providing seamless threat intelligence lookup and QR code decoding capabilities. This tool is designed to assist cybersecurity professionals in gathering insights from various sources and efficiently extracting information from QR codes, all within a single application.
 
