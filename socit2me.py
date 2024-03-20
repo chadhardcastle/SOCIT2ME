@@ -7,7 +7,7 @@ from colorama import Fore, Style
 from pyzbar.pyzbar import decode
 from PIL import Image
 
-# Load environment variables from .env file
+# Load API Key environment variables from .env file
 load_dotenv()
 
 # Retrieve API keys from environment variables
@@ -256,6 +256,6 @@ def print_help():
     print("- Type 'exit' to exit the tool.")
     print("- Type 'help' to display this help message.")
 
-# Entry point of the script
+
 if __name__ == "__main__":
     main()
