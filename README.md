@@ -64,3 +64,4 @@ Contributions are welcome! Please open an issue or submit a pull request with an
 
 ## License
 
+https://github.com/chadhardcastle/SOCIT2ME/blob/main/LICENSE
