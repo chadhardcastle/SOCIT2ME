@@ -7,7 +7,7 @@ from colorama import Fore, Style
 from pyzbar.pyzbar import decode
 from PIL import Image
 
-# Load API Key environment variables from .env file
+# Load environment variables from .env file
 load_dotenv()
 
 # Retrieve API keys from environment variables
@@ -54,20 +54,20 @@ def identify_and_run(input_value):
         else:
             print("No valid QR code found in the image.")
     # Check if the input is an IP address
-    elif re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", input_value):
+    elif re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", input_value) or re.match(r"^([0-9a-fA-F]{0,4}:){2,7}([0-9a-fA-F]{0,4})$", input_value):
         run_ip_functions(input_value)
     # Check if the input is a valid URL or domain
     elif re.match(r"^(https?://)?(www\.)?([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$", input_value):
         run_url_functions(input_value)
     # Check if the input is a valid hash value
     elif re.match(r"^[a-fA-F0-9]{32}$", input_value):
-        run_hash_functions(input_value)
+        run_hash_functions(input_value, "md5")
     elif re.match(r"^[a-fA-F0-9]{40}$", input_value):
-        run_hash_functions(input_value)
+        run_hash_functions(input_value, "sha1")
     elif re.match(r"^[a-fA-F0-9]{64}$", input_value):
-        run_hash_functions(input_value)
+        run_hash_functions(input_value, "sha256")
     elif re.match(r"^[a-fA-F0-9]{96}$", input_value):
-        run_hash_functions(input_value)
+        run_hash_functions(input_value, "sha3-384")
     else:
         print("Invalid input.")
 
@@ -85,9 +85,9 @@ def run_url_functions(url):
     #lookup_browserling(url)
     # Add other URL-related functions here
 
-def run_hash_functions(hash_value):
-    lookup_virustotal_hash(hash_value)
-    lookup_circl_hash(hash_value)
+def run_hash_functions(hash_value, hash_type):
+    lookup_virustotal_hash(hash_value, hash_type)
+    lookup_circl_hash(hash_value, hash_type)
     # Add other hash-related functions here
 
 def lookup_virustotal_ip(ip):
@@ -146,7 +146,7 @@ VirusTotal{Style.RESET_ALL}""")
         table.add_row(["Community Score", data['data']['attributes']['reputation']])
         if 'last_analysis_stats' in data['data']['attributes']:
             table.add_row(["Vendor Score", data['data']['attributes']['last_analysis_stats']])
-        table.add_row(["Report URL", f"{Fore.BLUE}https://www.virustotal.com/gui/files/{hash_value}/detection{Style.RESET_ALL}"])
+        table.add_row(["Report URL", f"{Fore.BLUE}https://www.virustotal.com/gui/file/{hash_value}{Style.RESET_ALL}"])
         print(table)
     else:
         print("Error:", response.text)
@@ -256,6 +256,6 @@ def print_help():
     print("- Type 'exit' to exit the tool.")
     print("- Type 'help' to display this help message.")
 
-
+# Entry point of the script
 if __name__ == "__main__":
     main()
